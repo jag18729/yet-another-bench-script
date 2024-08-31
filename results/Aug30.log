@@ -1,0 +1,88 @@
+ ~/Github/yet-another-bench-script  master  curl -sL yabs.sh | bash
+
+# ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## #
+#              Yet-Another-Bench-Script              #
+#                     v2024-06-09                    #
+# https://github.com/masonr/yet-another-bench-script #
+# ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## #
+
+Fri Aug 30 19:14:44 PDT 2024
+
+ARM compatibility is considered *experimental*
+
+Basic System Information:
+---------------------------------
+Uptime     : 0 days, 22 hours, 56 minutes
+awk: can't open file /proc/cpuinfo
+ source line number 1
+Processor  : 
+awk: can't open file /proc/cpuinfo
+ source line number 1
+awk: can't open file /proc/cpuinfo
+ source line number 1
+CPU cores  :  @ 
+cat: /proc/cpuinfo: No such file or directory
+AES-NI     : ❌ Disabled
+cat: /proc/cpuinfo: No such file or directory
+VM-x/AMD-V : ❌ Disabled
+bash: line 241: free: command not found
+RAM        : 
+bash: line 244: free: command not found
+Swap       : 
+Disk       : 
+grep: /etc/os-release: No such file or directory
+Distro     : 
+Kernel     : 23.6.0
+VM Type    : 
+IPv4/IPv6  : ✔ Online / ✔ Online
+
+IPv6 Network Information:
+---------------------------------
+ISP        : Cloudflare, Inc.
+ASN        : AS13335 Cloudflare, Inc.
+Host       : Cloudflare WARP
+Location   : Simi Valley, California (CA)
+Country    : United States
+
+fio Disk Speed Tests (Mixed R/W 50/50) (Partition /dev/disk3s1):
+---------------------------------
+Block Size | 4k            (IOPS) | 64k           (IOPS)
+  ------   | ---            ----  | ----           ---- 
+Read       |                   () |                   ()
+Write      |                   () |                   ()
+Total      | 0.00 KB/s        (0) | 0.00 KB/s        (0)
+           |                      |                     
+Block Size | 512k          (IOPS) | 1m            (IOPS)
+  ------   | ---            ----  | ----           ---- 
+Read       |                   () |                   ()
+Write      |                   () |                   ()
+Total      | 0.00 KB/s        (0) | 0.00 KB/s        (0)
+
+iperf3 Network Speed Tests (IPv4):
+---------------------------------
+Provider        | Location (Link)           | Send Speed      | Recv Speed      | Ping           
+-----           | -----                     | ----            | ----            | ----           
+Clouvider       | London, UK (10G)          | 15.1 Mbits/sec  | busy            | 159.991 ms     
+Eranium         | Amsterdam, NL (100G)      | 11.5 Mbits/sec  | 435 Mbits/sec   | 172.572 ms     
+Uztelecom       | Tashkent, UZ (10G)        | 12.9 Mbits/sec  | 42.6 Mbits/sec  | 257.481 ms     
+Leaseweb        | Singapore, SG (10G)       | 15.3 Mbits/sec  | 492 Mbits/sec   | 177.374 ms     
+Clouvider       | Los Angeles, CA, US (10G) | 16.8 Mbits/sec  | 548 Mbits/sec   | 17.274 ms      
+Leaseweb        | NYC, NY, US (10G)         | 15.8 Mbits/sec  | 253 Mbits/sec   | 79.936 ms      
+Edgoo           | Sao Paulo, BR (1G)        | 10.9 Mbits/sec  | 23.7 Mbits/sec  | 205.473 ms     
+
+iperf3 Network Speed Tests (IPv6):
+---------------------------------
+Provider        | Location (Link)           | Send Speed      | Recv Speed      | Ping           
+-----           | -----                     | ----            | ----            | ----           
+Clouvider       | London, UK (10G)          | 18.4 Mbits/sec  | busy            | --             
+Eranium         | Amsterdam, NL (100G)      | 15.3 Mbits/sec  | 403 Mbits/sec   | --             
+Uztelecom       | Tashkent, UZ (10G)        | 7.51 Mbits/sec  | 44.4 Mbits/sec  | --             
+Leaseweb        | Singapore, SG (10G)       | 9.24 Mbits/sec  | 234 Mbits/sec   | --             
+Clouvider       | Los Angeles, CA, US (10G) | 20.4 Mbits/sec  | 334 Mbits/sec   | --             
+Leaseweb        | NYC, NY, US (10G)         | 17.5 Mbits/sec  | 235 Mbits/sec   | --             
+Edgoo           | Sao Paulo, BR (1G)        | 10.0 Mbits/sec  | 56.9 Mbits/sec  | --             
+
+Running GB6 benchmark test... *cue elevator music*grep: /etc/os-release: No such file or directory
+Geekbench test failed and low memory was detected. Add at least 1GB of SWAP or use GB4 instead (higher compatibility with low memory systems).
+
+YABS completed in 10 min 3 sec
