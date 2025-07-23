@@ -1,0 +1,36 @@
+# Test results
+results/
+test_results_*/
+benchmark_results_*/
+network_test_results/
+dns_test_results/
+data_transfer_results/
+
+# Temporary files
+*.tmp
+*.log
+*.swp
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Generated files
+install_dependencies.sh
+comparison_results.csv
+
+# Config files (except templates)
+configs/*.conf
+!configs/*_template.conf

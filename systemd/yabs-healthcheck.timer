@@ -1,0 +1,14 @@
+[Unit]
+Description=Run YABS Health Check every 15 minutes
+Documentation=https://github.com/masonr/yet-another-bench-script
+Requires=yabs-healthcheck.service
+
+[Timer]
+# Run every 15 minutes
+OnCalendar=*:0/15
+# Run 1 minute after boot
+OnBootSec=1min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

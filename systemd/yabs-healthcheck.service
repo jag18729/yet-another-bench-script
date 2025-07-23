@@ -1,0 +1,21 @@
+[Unit]
+Description=YABS Health Check and Recovery Service
+Documentation=https://github.com/masonr/yet-another-bench-script
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/yabs/scripts/healthcheck.sh
+StandardOutput=append:/var/log/yabs/healthcheck.log
+StandardError=append:/var/log/yabs/healthcheck-error.log
+
+# Environment
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,17 @@
+[Unit]
+Description=Run YABS Performance Monitor every 6 hours
+Documentation=https://github.com/masonr/yet-another-bench-script
+Requires=yabs-monitor.service
+
+[Timer]
+# Run every 6 hours
+OnCalendar=*-*-* 00,06,12,18:00:00
+# Run 5 minutes after boot
+OnBootSec=5min
+# If missed, run as soon as possible
+Persistent=true
+# Randomize by up to 5 minutes to prevent thundering herd
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target
