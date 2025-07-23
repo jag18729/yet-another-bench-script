@@ -323,7 +323,7 @@ display_next_steps() {
     echo -e "  • Config file: ${YELLOW}client_config.conf${NC}"
     echo -e "\nTo run tests:"
     echo -e "\n1. Full test suite:"
-    echo -e "   ${YELLOW}./performance_test_suite.sh -p pre -c client_config.conf${NC}"
+    echo -e "   ${YELLOW}./scripts/core/performance_test_suite.sh -p pre -c configs/client_config.conf${NC}"
     echo -e "\n2. Individual tests:"
     echo -e "   ${YELLOW}./network_performance_test.sh -t all -d $VM_IP -s $VM_IP -p pre${NC}"
     echo -e "   ${YELLOW}./dns_performance_test.sh -s $VM_IP -p pre${NC}"

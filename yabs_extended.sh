@@ -4,6 +4,12 @@
 # Purpose: Run standard YABS benchmarks plus extended network performance tests
 
 YABS_EXTENDED_VERSION="v1.0.0"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source common functions if available
+if [ -f "$SCRIPT_DIR/lib/common_functions.sh" ]; then
+    source "$SCRIPT_DIR/lib/common_functions.sh"
+fi
 
 # Colors
 RED='\033[0;31m'
@@ -65,7 +71,7 @@ echo -e "Start Time: $(date)"
 echo ""
 
 # Create results directory
-RESULTS_DIR="benchmark_results_${TEST_PHASE}_$(date +%Y%m%d_%H%M%S)"
+RESULTS_DIR="$SCRIPT_DIR/results/benchmark_results_${TEST_PHASE}_$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$RESULTS_DIR"
 
 # Run standard YABS if not skipped
@@ -90,19 +96,23 @@ fi
 if [ "$RUN_NETWORK" = true ]; then
     echo -e "${GREEN}=== Running Extended Network Tests ===${NC}"
     
-    # Check if network_test.sh exists
-    if [ -f "./network_test.sh" ]; then
-        ./network_test.sh "$TEST_PHASE" 2>&1 | tee "$RESULTS_DIR/network_test_output.txt"
+    # Use the new network performance test script
+    if [ -f "$SCRIPT_DIR/scripts/core/network_performance_test.sh" ]; then
+        # Run comprehensive network tests
+        "$SCRIPT_DIR/scripts/core/network_performance_test.sh" -t ping -d 8.8.8.8 -p "$TEST_PHASE" -c 20
+        "$SCRIPT_DIR/scripts/core/network_performance_test.sh" -t ping -d 1.1.1.1 -p "$TEST_PHASE" -c 20
+        "$SCRIPT_DIR/scripts/core/network_performance_test.sh" -t traceroute -d 8.8.8.8 -p "$TEST_PHASE"
         
-        # Copy network test results to main results directory
-        if [ -d "network_test_results" ]; then
-            cp -r network_test_results/* "$RESULTS_DIR/" 2>/dev/null
+        # Run DNS performance tests
+        if [ "$RUN_DNS" = true ] && [ -f "$SCRIPT_DIR/scripts/core/dns_performance_test.sh" ]; then
+            echo -e "\n${BLUE}=== Running DNS Performance Tests ===${NC}"
+            "$SCRIPT_DIR/scripts/core/dns_performance_test.sh" -s 8.8.8.8 -p "$TEST_PHASE" -c 20
         fi
         
         echo ""
-        echo -e "${GREEN}✓ Network tests completed${NC}"
+        echo -e "${GREEN}✓ Extended tests completed${NC}"
     else
-        echo -e "${YELLOW}⚠ network_test.sh not found, using inline tests${NC}"
+        echo -e "${YELLOW}⚠ network_performance_test.sh not found, using inline tests${NC}"
         
         # Inline basic network tests
         echo -e "\n${BLUE}--- Basic Ping Tests ---${NC}"

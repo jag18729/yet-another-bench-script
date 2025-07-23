@@ -5,6 +5,14 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+
+# Source common functions if available
+if [ -f "$PROJECT_ROOT/lib/common_functions.sh" ]; then
+    source "$PROJECT_ROOT/lib/common_functions.sh"
+fi
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -86,7 +94,9 @@ install_scripts() {
     # Copy main scripts
     cp "$script_dir/yabs.sh" "$INSTALL_DIR/" 2>/dev/null || warning "yabs.sh not found"
     cp "$script_dir/yabs_extended.sh" "$INSTALL_DIR/"
-    cp "$script_dir/network_test.sh" "$INSTALL_DIR/"
+    # Copy core test scripts
+    mkdir -p "$INSTALL_DIR/scripts/core"
+    cp -r "$script_dir/scripts/core/"* "$INSTALL_DIR/scripts/core/" 2>/dev/null || true
     
     # Copy helper scripts
     mkdir -p "$INSTALL_DIR/scripts"
@@ -128,7 +138,7 @@ EOF
 # YABS Network Test Wrapper
 YABS_DIR="$HOME/.yabs"
 cd "$YABS_DIR"
-./network_test.sh "$@"
+./scripts/core/network_performance_test.sh -t ping -d 8.8.8.8 "$@"
 EOF
     chmod +x "$INSTALL_DIR/yabs-network"
     
@@ -196,7 +206,7 @@ test_installation() {
     cd "$INSTALL_DIR"
     
     # Quick network test
-    if ./network_test.sh test >/dev/null 2>&1; then
+    if [ -x "./scripts/core/network_performance_test.sh" ] && ./scripts/core/network_performance_test.sh -t ping -d 8.8.8.8 -c 5 -p test >/dev/null 2>&1; then
         log "Installation test passed"
     else
         warning "Test failed - checking dependencies..."

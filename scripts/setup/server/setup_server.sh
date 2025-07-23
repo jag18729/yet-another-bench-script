@@ -4,6 +4,13 @@
 # Run this on your Zorin VM (Parallels) to set up test servers
 
 SCRIPT_VERSION="v1.0.0"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+
+# Source common functions if available
+if [ -f "$PROJECT_ROOT/lib/common_functions.sh" ]; then
+    source "$PROJECT_ROOT/lib/common_functions.sh"
+fi
 
 echo -e '# ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## #'
 echo -e '#        Network Test Server Setup Script            #'
@@ -344,8 +351,8 @@ display_summary() {
     echo -e "  • SSH transfers: $SUDO_USER@$vm_ip:/home/$SUDO_USER/test_transfers"
     echo -e "\nNext Steps:"
     echo -e "  1. Copy ${YELLOW}/home/$SUDO_USER/client_config.conf${NC} to your Mac"
-    echo -e "  2. On your Mac, run: ${YELLOW}./setup_client.sh${NC}"
-    echo -e "  3. Use the config file for testing: ${YELLOW}./performance_test_suite.sh -c client_config.conf${NC}"
+    echo -e "  2. On your Mac, run: ${YELLOW}./scripts/setup/client/setup_client.sh${NC}"
+    echo -e "  3. Use the config file for testing: ${YELLOW}./scripts/core/performance_test_suite.sh -c configs/client_config.conf${NC}"
 }
 
 # Main execution

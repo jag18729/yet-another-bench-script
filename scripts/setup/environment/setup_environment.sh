@@ -5,6 +5,14 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+
+# Source common functions if available
+if [ -f "$PROJECT_ROOT/lib/common_functions.sh" ]; then
+    source "$PROJECT_ROOT/lib/common_functions.sh"
+fi
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -151,9 +159,11 @@ install_yabs() {
         chmod +x "$INSTALL_DIR/yabs_extended.sh"
     fi
     
-    if [ -f "$script_dir/network_test.sh" ]; then
-        cp "$script_dir/network_test.sh" "$INSTALL_DIR/"
-        chmod +x "$INSTALL_DIR/network_test.sh"
+    # Copy core test scripts
+    if [ -d "$script_dir/scripts/core" ]; then
+        mkdir -p "$INSTALL_DIR/scripts/core"
+        cp -r "$script_dir/scripts/core/"* "$INSTALL_DIR/scripts/core/"
+        chmod +x "$INSTALL_DIR/scripts/core/"*.sh
     fi
     
     # Copy helper scripts

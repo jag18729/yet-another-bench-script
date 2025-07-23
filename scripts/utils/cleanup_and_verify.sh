@@ -75,10 +75,10 @@ echo "  - sync_to_zorin.sh   : Sync files to Zorin VM"
 
 # Cleanup old results
 echo -e "\n${YELLOW}Cleanup options:${NC}"
-if ls test_results_* 2>/dev/null | head -1 >/dev/null; then
-    count=$(ls -d test_results_* 2>/dev/null | wc -l)
+if ls "$PROJECT_ROOT"/results/test_results_* 2>/dev/null | head -1 >/dev/null; then
+    count=$(ls -d "$PROJECT_ROOT"/results/test_results_* 2>/dev/null | wc -l)
     echo "  Found $count test result directories"
-    echo "  To clean: rm -rf test_results_*"
+    echo "  To clean: rm -rf results/test_results_*"
 else
     echo "  No test results found"
 fi

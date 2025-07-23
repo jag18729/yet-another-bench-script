@@ -2,6 +2,12 @@
 
 # Quick test of the integrated YABS network scripts
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Source common functions
+source "$PROJECT_ROOT/lib/common_functions.sh"
+
 echo "=== Quick Network Performance Test ==="
 echo "Testing basic functionality..."
 echo
@@ -47,8 +53,22 @@ fi
 # Test 4: Check scripts
 echo
 echo "4. Checking scripts..."
-for script in yabs.sh yabs_extended.sh network_test.sh; do
-    if [ -f "./$script" ] && [ -x "./$script" ]; then
+# Check main scripts
+if [ -f "$PROJECT_ROOT/yabs.sh" ] && [ -x "$PROJECT_ROOT/yabs.sh" ]; then
+    echo "✓ yabs.sh is present and executable"
+else
+    echo "✗ yabs.sh not found or not executable"
+fi
+
+if [ -f "$PROJECT_ROOT/yabs_extended.sh" ] && [ -x "$PROJECT_ROOT/yabs_extended.sh" ]; then
+    echo "✓ yabs_extended.sh is present and executable"
+else
+    echo "✗ yabs_extended.sh not found or not executable"
+fi
+
+# Check core test scripts
+for script in network_performance_test.sh dns_performance_test.sh data_transfer_test.sh performance_test_suite.sh; do
+    if [ -f "$PROJECT_ROOT/scripts/core/$script" ] && [ -x "$PROJECT_ROOT/scripts/core/$script" ]; then
         echo "✓ $script is present and executable"
     else
         echo "✗ $script not found or not executable"
@@ -58,11 +78,11 @@ done
 # Test 5: Run minimal network test
 echo
 echo "5. Running minimal network test..."
-if [ -x "./network_test.sh" ]; then
-    # Create minimal test with reduced counts
-    ./yabs_extended.sh -Y -T -p quick_test 2>&1 | grep -E "✓|✗|Running|completed"
+if [ -x "$PROJECT_ROOT/scripts/core/network_performance_test.sh" ]; then
+    # Run a quick ping test
+    "$PROJECT_ROOT/scripts/core/network_performance_test.sh" -t ping -d 8.8.8.8 -c 5 -p quick_test 2>&1 | grep -E "✓|✗|Summary:|completed"
 else
-    echo "✗ network_test.sh not executable"
+    echo "✗ network_performance_test.sh not executable"
 fi
 
 echo
