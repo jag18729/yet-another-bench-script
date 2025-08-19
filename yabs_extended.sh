@@ -23,11 +23,12 @@ RUN_YABS=true
 RUN_NETWORK=true
 RUN_DNS=true
 RUN_TRACE=true
+RUN_NETINFO=true
 TEST_PHASE="test"
 YABS_ARGS=""
 
 # Parse arguments
-while getopts 'hYNDTp:y:' flag; do
+while getopts 'hYNDTIp:y:' flag; do
     case "${flag}" in
         h) # Help
             echo "Extended YABS Script - $YABS_EXTENDED_VERSION"
@@ -40,6 +41,7 @@ while getopts 'hYNDTp:y:' flag; do
             echo "  -N         Skip extended network tests"
             echo "  -D         Skip DNS tests"
             echo "  -T         Skip traceroute tests"
+            echo "  -I         Skip network info lookup (prevents hanging)"
             echo "  -p PHASE   Set test phase (pre/test/post)"
             echo "  -y ARGS    Pass additional arguments to YABS"
             echo ""
@@ -54,6 +56,7 @@ while getopts 'hYNDTp:y:' flag; do
         N) RUN_NETWORK=false ;;
         D) RUN_DNS=false ;;
         T) RUN_TRACE=false ;;
+        I) RUN_NETINFO=false ;;
         p) TEST_PHASE="${OPTARG}" ;;
         y) YABS_ARGS="${OPTARG}" ;;
         *) exit 1 ;;
@@ -63,7 +66,7 @@ done
 # Header
 echo -e "${BLUE}# ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## #${NC}"
 echo -e "${BLUE}#            Extended YABS Benchmark Suite            #${NC}"
-echo -e "${BLUE}#                  $YABS_EXTENDED_VERSION                     #${NC}"
+echo -e "${BLUE}#                   $YABS_EXTENDED_VERSION                            #${NC}"
 echo -e "${BLUE}# ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## #${NC}"
 echo ""
 echo -e "Test Phase: ${YELLOW}$TEST_PHASE${NC}"
@@ -71,23 +74,103 @@ echo -e "Start Time: $(date)"
 echo ""
 
 # Create results directory
-RESULTS_DIR="$SCRIPT_DIR/results/benchmark_results_${TEST_PHASE}_$(date +%Y%m%d_%H%M%S)"
+RESULTS_DIR="${RESULTS_DIR:-$SCRIPT_DIR/results/${TEST_PHASE}_$(date +%b-%d-%Y_%H-%M-%S)-Extended-Test-Suite-Results}"
 mkdir -p "$RESULTS_DIR"
+
+# Detect operating system
+OS_TYPE="$(uname)"
+IS_MACOS=false
+if [[ "$OS_TYPE" == "Darwin" ]] || [[ "$YABS_MACOS" == "1" ]]; then
+    IS_MACOS=true
+fi
 
 # Run standard YABS if not skipped
 if [ "$RUN_YABS" = true ]; then
-    echo -e "${GREEN}=== Running Standard YABS Benchmarks ===${NC}"
-    echo -e "Command: ./yabs.sh $YABS_ARGS"
-    echo ""
-    
-    # Check if yabs.sh exists
-    if [ -f "./yabs.sh" ]; then
-        # Run YABS and capture output
-        ./yabs.sh $YABS_ARGS 2>&1 | tee "$RESULTS_DIR/yabs_output.txt"
+    if [ "$IS_MACOS" = true ]; then
+        echo -e "${GREEN}=== Running macOS System Information ===${NC}"
         echo ""
-        echo -e "${GREEN}✓ YABS tests completed${NC}"
+        
+        # macOS System Information
+        echo "Basic System Information:"
+        echo "---------------------------------"
+        echo "Uptime     : $(uptime | sed 's/.*up //' | awk -F',' '{print $1 $2}')"
+        echo "Processor  : $(sysctl -n machdep.cpu.brand_string 2>/dev/null || echo "Unknown")"
+        echo "CPU cores  : $(sysctl -n hw.physicalcpu 2>/dev/null || echo "Unknown") physical, $(sysctl -n hw.logicalcpu 2>/dev/null || echo "Unknown") logical"
+        echo "CPU Speed  : $(sysctl -n hw.cpufrequency_max 2>/dev/null | awk '{printf "%.2f GHz", $1/1000000000}' || echo "Unknown")"
+        echo "RAM        : $(( $(sysctl -n hw.memsize 2>/dev/null || echo 0) / 1024 / 1024 / 1024 )) GB"
+        echo "Swap       : $(sysctl -n vm.swapusage 2>/dev/null | awk '{gsub(/M/, "MB"); print $3 " total, " $6 " used, " $9 " free"}' || echo "Unknown")"
+        echo "Disk       : $(df -h / | awk 'NR==2 {print $2 " total, " $3 " used (" $5 ")"}')"
+        echo "OS         : $(sw_vers -productName) $(sw_vers -productVersion) ($(sw_vers -buildVersion))"
+        echo "Kernel     : $(uname -r)"
+        echo "Arch       : $(uname -m)"
+        echo ""
+        
+        # Network Information
+        if [ "$RUN_NETINFO" = true ]; then
+            echo "Network Information:"
+            echo "---------------------------------"
+            # Add timeout and better error handling
+            IP_INFO=$(curl -s --max-time 5 https://ipinfo.io/json 2>/dev/null)
+            CURL_EXIT=$?
+            if [ $CURL_EXIT -eq 0 ] && [ -n "$IP_INFO" ]; then
+                PUBLIC_IP=$(echo "$IP_INFO" | grep -o '"ip":"[^"]*' | cut -d'"' -f4)
+                if [ -n "$PUBLIC_IP" ]; then
+                    echo "Public IP  : $PUBLIC_IP"
+                    ISP=$(echo "$IP_INFO" | grep -o '"org":"[^"]*' | cut -d'"' -f4)
+                    [ -n "$ISP" ] && echo "ISP        : $ISP"
+                    CITY=$(echo "$IP_INFO" | grep -o '"city":"[^"]*' | cut -d'"' -f4)
+                    REGION=$(echo "$IP_INFO" | grep -o '"region":"[^"]*' | cut -d'"' -f4)
+                    [ -n "$CITY" ] && [ -n "$REGION" ] && echo "Location   : $CITY, $REGION"
+                    COUNTRY=$(echo "$IP_INFO" | grep -o '"country":"[^"]*' | cut -d'"' -f4)
+                    [ -n "$COUNTRY" ] && echo "Country    : $COUNTRY"
+                else
+                    echo "Public IP  : Unable to determine (timeout/network issue)"
+                fi
+            else
+                echo "Public IP  : Unable to determine (timeout/network issue)"
+            fi
+            echo ""
+        fi
+        
+        # Basic disk speed test for macOS
+        echo "Disk Speed Test (dd):"
+        echo "---------------------------------"
+        echo "Testing write speed..."
+        WRITE_SPEED=$(timeout 10 dd if=/dev/zero of=/tmp/yabs_test bs=1024k count=1024 2>&1 | awk '/bytes/{print $(NF-1) " " $NF}' | tail -1)
+        DD_EXIT=$?
+        rm -f /tmp/yabs_test
+        if [ $DD_EXIT -eq 0 ] && [ -n "$WRITE_SPEED" ]; then
+            echo "Write Speed: $WRITE_SPEED"
+        else
+            echo "Write Speed: Test skipped (timeout/error)"
+        fi
+        echo ""
+        
+        # Save output
+        {
+            echo "macOS System Information"
+            echo "========================"
+            echo "Processor  : $(sysctl -n machdep.cpu.brand_string 2>/dev/null || echo "Unknown")"
+            echo "CPU cores  : $(sysctl -n hw.physicalcpu 2>/dev/null || echo "Unknown") physical, $(sysctl -n hw.logicalcpu 2>/dev/null || echo "Unknown") logical"
+            echo "RAM        : $(( $(sysctl -n hw.memsize 2>/dev/null || echo 0) / 1024 / 1024 / 1024 )) GB"
+            echo "Disk       : $(df -h / | awk 'NR==2 {print $2 " total, " $3 " used (" $5 ")"}')"
+        } > "$RESULTS_DIR/yabs_output.txt"
+        
+        echo -e "${GREEN}✓ macOS system tests completed${NC}"
     else
-        echo -e "${RED}✗ yabs.sh not found in current directory${NC}"
+        echo -e "${GREEN}=== Running Standard YABS Benchmarks ===${NC}"
+        echo -e "Command: ./yabs.sh $YABS_ARGS"
+        echo ""
+        
+        # Check if yabs.sh exists
+        if [ -f "./yabs.sh" ]; then
+            # Run YABS and capture output
+            ./yabs.sh $YABS_ARGS 2>&1 | tee "$RESULTS_DIR/yabs_output.txt"
+            echo ""
+            echo -e "${GREEN}✓ YABS tests completed${NC}"
+        else
+            echo -e "${RED}✗ yabs.sh not found in current directory${NC}"
+        fi
     fi
     echo ""
 fi
@@ -106,7 +189,9 @@ if [ "$RUN_NETWORK" = true ]; then
         # Run DNS performance tests
         if [ "$RUN_DNS" = true ] && [ -f "$SCRIPT_DIR/scripts/core/dns_performance_test.sh" ]; then
             echo -e "\n${BLUE}=== Running DNS Performance Tests ===${NC}"
-            "$SCRIPT_DIR/scripts/core/dns_performance_test.sh" -s 8.8.8.8 -p "$TEST_PHASE" -c 20
+            # Use DNS server from environment or default to 1.1.1.1
+            dns_server="${DNS_SERVER:-1.1.1.1}"
+            "$SCRIPT_DIR/scripts/core/dns_performance_test.sh" -s "$dns_server" -p "$TEST_PHASE" -c 20
         fi
         
         echo ""
@@ -144,16 +229,16 @@ if [ "$RUN_NETWORK" = true ]; then
         if [ "$RUN_DNS" = true ]; then
             echo -e "\n${BLUE}--- Basic DNS Tests ---${NC}"
             if command -v dig >/dev/null 2>&1; then
-                for server in 8.8.8.8 1.1.1.1 9.9.9.9; do
-                    echo -e "\nTesting DNS server $server..."
-                    dig @"$server" google.com +stats > "$RESULTS_DIR/${TEST_PHASE}_dns_${server}.txt" 2>&1
-                    query_time=$(grep "Query time:" "$RESULTS_DIR/${TEST_PHASE}_dns_${server}.txt" | awk '{print $4}')
-                    if [ -n "$query_time" ]; then
-                        echo -e "${GREEN}✓${NC} $server: Query time = ${query_time}ms"
-                    else
-                        echo -e "${RED}✗${NC} $server: Failed"
-                    fi
-                done
+                # Use configured DNS server or default
+                dns_server="${DNS_SERVER:-1.1.1.1}"
+                echo -e "\nTesting DNS server $dns_server..."
+                dig @"$dns_server" google.com +stats > "$RESULTS_DIR/${TEST_PHASE}_dns_${dns_server}.txt" 2>&1
+                query_time=$(grep "Query time:" "$RESULTS_DIR/${TEST_PHASE}_dns_${dns_server}.txt" | awk '{print $4}')
+                if [ -n "$query_time" ]; then
+                    echo -e "${GREEN}✓${NC} $dns_server: Query time = ${query_time}ms"
+                else
+                    echo -e "${RED}✗${NC} $dns_server: Failed"
+                fi
             else
                 echo -e "${YELLOW}⚠${NC} dig not available for DNS tests"
             fi

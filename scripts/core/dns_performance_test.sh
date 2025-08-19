@@ -5,7 +5,7 @@
 # Part of the comprehensive performance testing suite
 
 SCRIPT_VERSION="v1.0.0"
-TIMESTAMP=$(date '+%Y-%m-%d_%H-%M-%S')
+TIMESTAMP=$(date '+%b-%d-%Y_%H-%M-%S')
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
@@ -21,7 +21,7 @@ echo -e
 # Default values
 DEFAULT_QUERY_COUNT=100
 DEFAULT_TIMEOUT=5
-OUTPUT_DIR="$PROJECT_ROOT/results/dns_test_results"
+OUTPUT_DIR="${RESULTS_DIR:-$PROJECT_ROOT/results/${PRE_POST}_${TIMESTAMP}-Extended-Test-Suite-Results}"
 DNS_SERVER=""
 DOMAIN_LIST=""
 QUERY_COUNT=$DEFAULT_QUERY_COUNT
@@ -212,7 +212,15 @@ test_dns_with_dig() {
         # Calculate domain statistics
         if [ "$domain_successful" -gt 0 ]; then
             local domain_avg_time=$((domain_total_time / domain_successful))
-            echo "  $domain: avg=${domain_avg_time}ms, min=${domain_min_time}ms, max=${domain_max_time}ms, success=$domain_successful/$QUERY_COUNT" | tee -a "$stats_file"
+            echo "" # Space before domain result
+            local success_rate=$(echo "scale=1; $domain_successful * 100 / $QUERY_COUNT" | bc)
+            local avg_color="${GREEN}"
+            [ $domain_avg_time -gt 100 ] && avg_color="${YELLOW}"
+            [ $domain_avg_time -gt 200 ] && avg_color="${RED}"
+            
+            echo -e "  ${BOLD}$domain${NC}" | tee -a "$stats_file"
+            echo -e "    ${BOLD}Average:${NC} ${avg_color}${domain_avg_time}ms${NC}  ${BOLD}Min:${NC} ${domain_min_time}ms  ${BOLD}Max:${NC} ${domain_max_time}ms" | tee -a "$stats_file"
+            echo -e "    ${BOLD}Success:${NC} $domain_successful/$QUERY_COUNT (${GREEN}${success_rate}%${NC})" | tee -a "$stats_file"
             
             # Add to JSON
             if [ "$total_queries" -gt "$QUERY_COUNT" ]; then
@@ -242,17 +250,43 @@ test_dns_with_dig() {
         echo "  }" >> "$json_file"
         echo "}" >> "$json_file"
         
-        # Print summary
+        # Calculate success rate
+        local success_rate=$(echo "scale=2; $successful_queries * 100 / $total_queries" | bc)
+        
+        # Save summary to stats file
+        {
+            echo ""
+            echo "DNS Performance Test Summary:"
+            echo "=============================="
+            echo "Total queries: $total_queries"
+            echo "Successful: $successful_queries"
+            echo "Failed: $failed_queries"
+            echo "Success rate: ${success_rate}%"
+            echo "Average response time: ${avg_time}ms"
+            echo "Min response time: ${min_time}ms"
+            echo "Max response time: ${max_time}ms"
+        } >> "$stats_file"
+        
+        # Also print to console with formatting
         echo ""
-        echo "DNS Performance Test Summary:"
-        echo "=============================="
-        echo "Total queries: $total_queries"
-        echo "Successful: $successful_queries"
-        echo "Failed: $failed_queries"
-        echo "Success rate: $(echo "scale=2; $successful_queries * 100 / $total_queries" | bc)%"
-        echo "Average response time: ${avg_time}ms"
-        echo "Min response time: ${min_time}ms"
-        echo "Max response time: ${max_time}ms"
+        echo ""
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${BOLD}  DNS PERFORMANCE SUMMARY - $DNS_SERVER${NC}"
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo ""
+        echo -e "  ${BOLD}Total Queries:${NC}   $total_queries"
+        echo -e "  ${BOLD}Successful:${NC}      ${GREEN}$successful_queries${NC} (${GREEN}${success_rate}%${NC})"
+        echo -e "  ${BOLD}Failed:${NC}          ${RED}$failed_queries${NC}"
+        echo ""
+        local avg_color="${GREEN}"
+        [ $avg_time -gt 100 ] && avg_color="${YELLOW}"
+        [ $avg_time -gt 200 ] && avg_color="${RED}"
+        echo -e "  ${BOLD}Response Times:${NC}"
+        echo -e "    ${BOLD}Average:${NC}     ${avg_color}${avg_time}ms${NC}"
+        echo -e "    ${BOLD}Minimum:${NC}     ${GREEN}${min_time}ms${NC}"
+        echo -e "    ${BOLD}Maximum:${NC}     ${RED}${max_time}ms${NC}"
+        echo ""
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         echo ""
         echo "Results saved to:"
         echo "  - Statistics: $stats_file"

@@ -5,12 +5,23 @@
 # Part of the comprehensive performance testing suite
 
 SCRIPT_VERSION="v1.0.0"
-TIMESTAMP=$(date '+%Y-%m-%d_%H-%M-%S')
+TIMESTAMP=$(date '+%b-%d-%Y_%H-%M-%S')
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-# Source common functions
+# Source common functions and colors
 source "$PROJECT_ROOT/lib/common_functions.sh"
+
+# Define colors if not already defined
+if [ -z "$BLUE" ]; then
+    BLUE='\033[0;34m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[0;33m'
+    RED='\033[0;31m'
+    CYAN='\033[0;36m'
+    BOLD='\033[1m'
+    NC='\033[0m' # No Color
+fi
 
 echo -e '# ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## #'
 echo -e '#           Data Transfer Test Script                #'
@@ -19,7 +30,7 @@ echo -e '# ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## #'
 echo -e
 
 # Default values
-OUTPUT_DIR="$PROJECT_ROOT/results/data_transfer_results"
+OUTPUT_DIR="${RESULTS_DIR:-$PROJECT_ROOT/results/${PRE_POST}_${TIMESTAMP}-Extended-Test-Suite-Results}"
 TEST_TYPE=""
 REMOTE_HOST=""
 REMOTE_USER=""
@@ -228,10 +239,19 @@ run_scp_test() {
 }
 EOF
         
-        echo "SCP upload completed successfully"
-        echo "File size: $(echo "scale=2; $file_size / 1048576" | bc) MB"
-        echo "Duration: ${duration} seconds"
-        echo "Speed: ${speed} MB/s"
+        echo ""
+        echo -e "${GREEN}✓ SCP upload completed successfully${NC}"
+        echo ""
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${BOLD}  SCP UPLOAD RESULTS - $REMOTE_HOST${NC}"
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo ""
+        echo -e "  ${BOLD}File Size:${NC}   $(echo "scale=2; $file_size / 1048576" | bc) MB"
+        echo -e "  ${BOLD}Duration:${NC}    ${duration} seconds"
+        echo -e "  ${BOLD}Speed:${NC}       ${GREEN}${speed} MB/s${NC}"
+        [ "$USE_PARALLEL" = true ] && echo -e "  ${BOLD}Mode:${NC}        ${YELLOW}Parallel Transfer${NC}"
+        echo ""
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         
         # Clean up remote file
         ssh "${REMOTE_USER}@${REMOTE_HOST}" "rm -f ${REMOTE_PATH}/$(basename $LOCAL_FILE)" 2>/dev/null
@@ -323,11 +343,19 @@ run_rsync_test() {
 EOF
         
         echo ""
-        echo "rsync completed successfully"
-        echo "File size: $(echo "scale=2; $file_size / 1048576" | bc) MB"
-        echo "Duration: ${duration} seconds"
-        echo "Speed: ${speed} MB/s"
-        [ ! -z "$rsync_rate" ] && echo "rsync reported: $rsync_rate"
+        echo -e "${GREEN}✓ rsync completed successfully${NC}"
+        echo ""
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${BOLD}  RSYNC RESULTS - $REMOTE_HOST${NC}"
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo ""
+        echo -e "  ${BOLD}File Size:${NC}   $(echo "scale=2; $file_size / 1048576" | bc) MB"
+        echo -e "  ${BOLD}Duration:${NC}    ${duration} seconds"
+        echo -e "  ${BOLD}Speed:${NC}       ${GREEN}${speed} MB/s${NC}"
+        [ ! -z "$rsync_rate" ] && echo -e "  ${BOLD}Rsync Rate:${NC}  ${YELLOW}$rsync_rate${NC}"
+        echo -e "  ${BOLD}Compression:${NC} ${GREEN}Enabled${NC}"
+        echo ""
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         
         # Clean up remote file
         ssh "${REMOTE_USER}@${REMOTE_HOST}" "rm -f ${REMOTE_PATH}/$(basename $LOCAL_FILE)" 2>/dev/null
@@ -401,10 +429,21 @@ run_wget_test() {
 EOF
         
         echo ""
-        echo "wget download completed successfully"
-        echo "File size: $(echo "scale=2; $file_size / 1048576" | bc) MB"
-        echo "Duration: ${duration} seconds"
-        echo "Speed: ${speed} MB/s"
+        echo -e "${GREEN}✓ wget download completed successfully${NC}"
+        echo ""
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${BOLD}  WGET DOWNLOAD RESULTS${NC}"
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo ""
+        echo -e "  ${BOLD}URL:${NC}         $(echo $url | cut -c1-50)..."
+        echo -e "  ${BOLD}File Size:${NC}   $(echo "scale=2; $file_size / 1048576" | bc) MB"
+        echo -e "  ${BOLD}Duration:${NC}    ${duration} seconds"
+        echo -e "  ${BOLD}Speed:${NC}       ${GREEN}${speed} MB/s${NC}"
+        local mbps=$(echo "scale=2; $speed * 8" | bc)
+        echo -e "  ${BOLD}Bandwidth:${NC}   ${YELLOW}${mbps} Mbps${NC}"
+        [ "$USE_PARALLEL" = true ] && echo -e "  ${BOLD}Mode:${NC}        ${YELLOW}Parallel Download (aria2c)${NC}"
+        echo ""
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         
         # Cleanup download
         rm -f "$download_file"
@@ -481,11 +520,21 @@ EOF
 EOF
         
         echo ""
-        echo "curl download completed successfully"
-        echo "File size: $(echo "scale=2; $file_size / 1048576" | bc) MB"
-        echo "Duration: ${duration} seconds"
-        echo "Speed: ${speed} MB/s"
-        echo "curl reported: ${curl_speed_mbps} MB/s"
+        echo -e "${GREEN}✓ curl download completed successfully${NC}"
+        echo ""
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${BOLD}  CURL DOWNLOAD RESULTS${NC}"
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo ""
+        echo -e "  ${BOLD}URL:${NC}         $(echo $url | cut -c1-50)..."
+        echo -e "  ${BOLD}File Size:${NC}   $(echo "scale=2; $file_size / 1048576" | bc) MB"
+        echo -e "  ${BOLD}Duration:${NC}    ${duration} seconds"
+        echo -e "  ${BOLD}Speed:${NC}       ${GREEN}${speed} MB/s${NC}"
+        echo -e "  ${BOLD}Curl Speed:${NC}  ${YELLOW}${curl_speed_mbps} MB/s${NC}"
+        local mbps=$(echo "scale=2; $speed * 8" | bc)
+        echo -e "  ${BOLD}Bandwidth:${NC}   ${YELLOW}${mbps} Mbps${NC}"
+        echo ""
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         
         # Cleanup download
         rm -f "$download_file"
@@ -540,4 +589,11 @@ case $TEST_TYPE in
 esac
 
 echo ""
-echo "All transfer tests completed. Results are saved in the $OUTPUT_DIR directory."
+echo ""
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}  ✓ ALL TRANSFER TESTS COMPLETED${NC}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo -e "  ${BOLD}Results saved in:${NC}"
+echo -e "  $OUTPUT_DIR"
+echo ""

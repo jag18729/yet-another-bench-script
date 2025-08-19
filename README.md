@@ -1,5 +1,7 @@
 # 🚀 Yet Another Bench Script - Extended Performance Testing Suite
 
+> 📌 **Note**: This is part of the [DNS Performance Testing Suite](../README.md). For DNS migration testing, see [DNS Performance Testing Tool](../DNS-Performance-Testing/README.md).
+
 A comprehensive network and system performance testing suite that extends the original [YABS (Yet Another Bench Script)](https://github.com/masonr/yet-another-bench-script) with advanced network testing capabilities.
 
 ## 📋 Table of Contents
@@ -43,6 +45,23 @@ Perfect for:
 - **Modular Design**: Run individual tests or complete suite
 
 ## 🚀 Quick Start
+
+### Recommended Tests by Time
+
+```bash
+# 1-Minute Quick Check
+./test.sh quick -Y -T --time 5
+
+# 5-Minute Recommended Test (with iPerf3 server at 192.168.2.10)
+./scripts/core/performance_test_suite.sh -q -c configs/test_config.conf
+
+# 15-Minute Comprehensive Test
+./scripts/core/performance_test_suite.sh --full -c configs/test_config.conf
+```
+
+See [QUICK_TEST_GUIDE.md](QUICK_TEST_GUIDE.md) for detailed test scenarios.
+
+### Installation
 
 ```bash
 # 1. Clone the repository
@@ -226,6 +245,17 @@ export PERF_TEST_DEBUG=1
 ```
 
 ## 🔧 Advanced Usage
+
+### macOS Compatibility
+
+The test suite includes macOS compatibility features:
+
+- **YABS Tests**: Automatically uses macOS-compatible wrapper that skips Linux-specific tests
+- **Network Tests**: All network tests (ping, traceroute, iperf3) work on macOS
+- **DNS Tests**: Fully compatible with macOS
+- **Data Transfer**: wget/curl tests work normally
+
+**Note**: Some YABS features (disk I/O, memory tests) are limited on macOS. For comprehensive testing, use a Linux system.
 
 ### Parallel Execution
 
